@@ -1,13 +1,34 @@
+class InfoMessage():
+    def __init__(
+        self,
+        calories: float,
+        duration: float,
+        distance: float,
+        speed: float,
+        training_type: str,
+    ) -> None:
+        self.calories = calories
+        self.duration = duration
+        self.distance = distance
+        self.speed = speed
+        self.training_type = training_type
+
+    def __str__(self) -> str:
+        return (f'Training: {self.training_type}, duration: {self.duration} hrs, '
+                f'distance: {self.distance} km, '
+                f'avg speed: {self.speed} km/hr, kcal: {self.calories}')
+
+
 class Training():
-    LEN_STEP = .65
-    M_IN_KM = 1000
-    MIN_IN_HOUR = 60
+    LEN_STEP: float = .65
+    M_IN_KM: int = 1000
+    MIN_IN_HOUR: int = 60
 
     def __init__(
         self,
-        action,
-        duration,
-        weight,
+        action: int,
+        duration: float,
+        weight: int,
     ) -> None:
         self.action = action
         self.duration = duration
@@ -23,13 +44,19 @@ class Training():
     def get_spent_calories(self) -> float:
         assert(NotImplementedError)
 
-    def show_training_info(self):
+    def show_training_info(self) -> InfoMessage:
         return InfoMessage(self.get_spent_calories(), self.duration, self.get_distance(),
                            self.get_mean_speed(), self.training_type)
 
 
 class Walking(Training):
-    def __init__(self, action, duration, weight, height) -> None:
+    def __init__(
+        self,
+        action: int,
+        duration: float,
+        weight: int,
+        height: int,
+    ) -> None:
         super().__init__(action, duration, weight)
         self.height = height
         self.training_type = 'Walking'
@@ -64,21 +91,8 @@ class Swimming(Training):
         return (self.get_mean_speed() + 1.1) * 2 * self.weight
 
 
-class InfoMessage():
-    def __init__(self, calories, duration, distance, speed, training_type) -> None:
-        self.calories = calories
-        self.duration = duration
-        self.distance = distance
-        self.speed = speed
-        self.training_type = training_type
-
-    def __str__(self):
-        return (f'Training: {self.training_type}, duration: {self.duration} hrs, '
-                f'distance: {self.distance} km, '
-                f'avg speed: {self.speed} km/hr, kcal: {self.calories}')
-
-
-def read_package():
+# тут, наверное, должны подававаться на вход необходимые данные
+def read_package() -> dict:
     data = [
         ('Walking', [9000, 1, 75, 180]),
         ('Running', [15000, 1, 75]),
@@ -87,7 +101,7 @@ def read_package():
     return dict(data)
 
 
-def main():
+def main() -> None:
     data = read_package()
     for training_type in data.keys():
         print(globals()[training_type](
