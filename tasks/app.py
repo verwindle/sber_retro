@@ -1,9 +1,11 @@
-import sys
-
-
 class InfoMessage:
     def __init__(
-        self, training_type: str, duration: float, distance: float, speed: float, calories: float
+        self,
+        training_type: str,
+        duration: float,
+        distance: float,
+        speed: float,
+        calories: float,
     ) -> None:
         self.training_type = training_type
         self.duration = duration
@@ -22,8 +24,8 @@ class InfoMessage:
 
 
 class Training:
-    LEN_STEP = 0.65
-    M_IN_KM = 1000
+    LEN_STEP: float = 0.65
+    M_IN_KM: int = 1000
 
     def __init__(self, action: float, duration: float, weight: float) -> None:
         self.action = action
@@ -53,53 +55,69 @@ class Training:
 
 
 class Swimming(Training):
-    LEN_STEP = 1.38
+    LEN_STEP: float = 1.38
 
-    def __init__(self, action: float, duration: float, weight: float, length_pool: float, count_pool: int) -> None:
+    def __init__(
+        self,
+        action: float,
+        duration: float,
+        weight: float,
+        length_pool: float,
+        count_pool: int,
+    ) -> None:
         super().__init__(action, duration, weight)
         self.length_pool = length_pool
         self.count_pool = count_pool
 
-    def get_distance(self):
+    def get_distance(self) -> flaot:
         return super().get_distance()
 
-    def get_mean_speed(self):
+    def get_mean_speed(self) -> float:
         return self.length_pool * self.count_pool / self.M_IN_KM / self.duration
 
-    def get_spent_calories(self):
+    def get_spent_calories(self) -> float:
         const_a = 1.1  # TODO https://www.youtube.com/watch?v=EXI4TC0xpKw
         const_b = 2  # TODO https://www.youtube.com/watch?v=EXI4TC0xpKw
         return (self.get_mean_speed() + const_a) * const_b * self.weight
 
 
 class SportsWalking(Training):
-    def __init__(self, action: float, duration: float, weight: float, height: float) -> None:
+    def __init__(
+        self, action: float, duration: float, weight: float, height: float
+    ) -> None:
         super().__init__(action, duration, weight)
 
         self.height = height
 
-    def get_spent_calories(self):
+    def get_spent_calories(self) -> float:
         min_in_hour = 60
         const_c = 0.035  # TODO https://www.youtube.com/watch?v=EXI4TC0xpKw
         const_d = 0.029  # TODO https://www.youtube.com/watch?v=EXI4TC0xpKw
         return (
-            (const_c * self.weight + (self.get_mean_speed() ** 2 // self.height) * const_d * self.weight)
+            (
+                const_c * self.weight
+                + (self.get_mean_speed() ** 2 // self.height) * const_d * self.weight
+            )
             * self.duration
             * min_in_hour
         )
 
 
 class Running(Training):
-    def get_spent_calories(self):
+    def get_spent_calories(self) -> float:
         min_in_hour = 60
         const_e = 18  # TODO https://www.youtube.com/watch?v=EXI4TC0xpKw
         const_f = 20  # TODO https://www.youtube.com/watch?v=EXI4TC0xpKw
         return (
-            (const_e * self.get_mean_speed() - const_f) * self.weight / self.M_IN_KM * self.duration * min_in_hour
+            (const_e * self.get_mean_speed() - const_f)
+            * self.weight
+            / self.M_IN_KM
+            * self.duration
+            * min_in_hour
         )
 
 
-def read_package():
+def read_package() -> list:
     # magic
     data_from_drivers = [
         ("SportsWalking", [9000, 1, 75, 180]),
@@ -109,11 +127,13 @@ def read_package():
     return data_from_drivers
 
 
-def main():
+def main() -> None:
     for training_type, data in read_package():
         class_str = training_type
         args_str = str(data)[1:-1]
-        calc_class = eval(f"{class_str}({args_str})")  # equal `calc_class = class(args)`
+        calc_class = eval(
+            f"{class_str}({args_str})"
+        )  # equal `calc_class = class(args)`
         print(calc_class.show_training_info())
 
 
