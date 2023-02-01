@@ -1,50 +1,98 @@
-def do_sth_cool(tr_type, action, dur, weight, height=None, length_pool=None, n_times_pool_passed=None):
-    if tr_type == 'Walking':
-        dist = action * .65 / 1000  # действие * на длину шага в м / метров в км
-        av_sp = dist / dur  # средняя скорость
-        # формула (а * вес + ср скорость ** 2 // рост * b * вес) * длительность * минут в час
-        clr = ((.035 * weight + (
-                av_sp ** 2 // height
-        ) * .029 * weight) * dur * 60)
-        return (f'Training: {tr_type}, duration: {dur} hrs, distance: {dist} km,'
-                f'avg speed: {av_sp} km/hr, kcal: {clr}')
-    if tr_type == 'Running':
-        dist = action * .65 / 1000
-        av_sp = dist / dur
-        # формула (а * ср скорость - b) * вес / метров в км * длительность * минут в час
-        clr = (18 * av_sp - 20) * weight / 1000 * dur * 60
-        return (f'Training: {tr_type}, duration: {dur} hrs, distance: {dist} km,'
-                f'avg speed: {av_sp} km/hr, kcal: {clr}')
-    if tr_type == 'Swimming':
-        dist = action * 1.38 / 1000
-        # формула длина дорожки * кол-во раз прохода дорожки / метров в км / длительность
-        av_sp = length_pool * n_times_pool_passed / 1000 / dur
-        # формула (ср скорость + а) * b * вес
-        clr = (av_sp + 1.1) * 2 * weight
-        return (f'Training: {tr_type}, duration: {dur} hrs, distance: {dist} km,'
-                f'avg speed: {av_sp} km/hr, kcal: {clr}')
+class Training():
+    LEN_STEP = .65
+    M_IN_KM = 1000
+    MIN_IN_HOUR = 60
+
+    def __init__(
+        self,
+        action,
+        duration,
+        weight,
+    ) -> None:
+        self.action = action
+        self.duration = duration
+        self.weight = weight
+        self.training_type = None
+
+    def get_distance(self) -> float:
+        return self.action * self.LEN_STEP / self.M_IN_KM
+
+    def get_mean_speed(self) -> float:
+        return self.get_distance() / self.duration
+
+    def get_spent_calories(self) -> float:
+        assert(NotImplementedError)
+
+    def show_training_info(self):
+        return InfoMessage(self.get_spent_calories(), self.duration, self.get_distance(),
+                           self.get_mean_speed(), self.training_type)
 
 
-def main(*training_driver_data):
-    training_info = do_sth_cool(*training_driver_data)
-    print(training_info)
+class Walking(Training):
+    def __init__(self, action, duration, weight, height) -> None:
+        super().__init__(action, duration, weight)
+        self.height = height
+        self.training_type = 'Walking'
+
+    def get_spent_calories(self) -> float:
+        return ((.035 + self.get_mean_speed() ** 2 // self.height * .029)
+                * self.weight * self.duration * self.MIN_IN_HOUR)
 
 
-if __name__ == '__main__':
-    # Изменять переменную нельзя, в таком виде получаем с датчиков
-    data_from_drivers = [
+class Running(Training):
+    def __init__(self, action, duration, weight) -> None:
+        super().__init__(action, duration, weight)
+        self.training_type = 'Running'
+
+    def get_spent_calories(self) -> float:
+        return (18 * self.get_mean_speed() - 20) * self.weight / self.M_IN_KM * self.duration * self.MIN_IN_HOUR
+
+
+class Swimming(Training):
+    LEN_STEP = 1.38
+
+    def __init__(self, action, duration, weight, length_pool, count_pool) -> None:
+        super().__init__(action, duration, weight)
+        self.count_pool = count_pool
+        self.length_pool = length_pool
+        self.training_type = 'Swimming'
+
+    def get_mean_speed(self) -> float:
+        return self.length_pool * self.count_pool / self.M_IN_KM / self.duration
+
+    def get_spent_calories(self) -> float:
+        return (self.get_mean_speed() + 1.1) * 2 * self.weight
+
+
+class InfoMessage():
+    def __init__(self, calories, duration, distance, speed, training_type) -> None:
+        self.calories = calories
+        self.duration = duration
+        self.distance = distance
+        self.speed = speed
+        self.training_type = training_type
+
+    def __str__(self):
+        return (f'Training: {self.training_type}, duration: {self.duration} hrs, '
+                f'distance: {self.distance} km, '
+                f'avg speed: {self.speed} km/hr, kcal: {self.calories}')
+
+
+def read_package():
+    data = [
         ('Walking', [9000, 1, 75, 180]),
         ('Running', [15000, 1, 75]),
         ('Swimming', [720, 1, 75, 25, 40]),
     ]
-    for d in data_from_drivers:
-        tr_type = d[0]
-        if tr_type == 'Walking':
-            action, duration, weight, height = d[1]
-            main(tr_type, action, duration, weight, height, None, None)
-        elif tr_type == 'Running':
-            action, duration, weight = d[1]
-            main(tr_type, action, duration, weight, None, None, None)
-        elif tr_type == 'Swimming':
-            action, duration, weight, length_pool, n_times_pool_passed = d[1]
-            main(tr_type, action, duration, weight, None, length_pool, n_times_pool_passed)
+    return dict(data)
+
+
+def main():
+    data = read_package()
+    for training_type in data.keys():
+        print(globals()[training_type](
+            *data[training_type]).show_training_info())
+
+
+if __name__ == '__main__':
+    main()
