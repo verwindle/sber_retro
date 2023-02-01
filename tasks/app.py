@@ -1,50 +1,141 @@
-def do_sth_cool(tr_type, action, dur, weight, height=None, length_pool=None, n_times_pool_passed=None):
-    if tr_type == 'Walking':
-        dist = action * .65 / 1000  # действие * на длину шага в м / метров в км
-        av_sp = dist / dur  # средняя скорость
-        # формула (а * вес + ср скорость ** 2 // рост * b * вес) * длительность * минут в час
-        clr = ((.035 * weight + (
-                av_sp ** 2 // height
-        ) * .029 * weight) * dur * 60)
-        return (f'Training: {tr_type}, duration: {dur} hrs, distance: {dist} km,'
-                f'avg speed: {av_sp} km/hr, kcal: {clr}')
-    if tr_type == 'Running':
-        dist = action * .65 / 1000
-        av_sp = dist / dur
-        # формула (а * ср скорость - b) * вес / метров в км * длительность * минут в час
-        clr = (18 * av_sp - 20) * weight / 1000 * dur * 60
-        return (f'Training: {tr_type}, duration: {dur} hrs, distance: {dist} km,'
-                f'avg speed: {av_sp} km/hr, kcal: {clr}')
-    if tr_type == 'Swimming':
-        dist = action * 1.38 / 1000
-        # формула длина дорожки * кол-во раз прохода дорожки / метров в км / длительность
-        av_sp = length_pool * n_times_pool_passed / 1000 / dur
-        # формула (ср скорость + а) * b * вес
-        clr = (av_sp + 1.1) * 2 * weight
-        return (f'Training: {tr_type}, duration: {dur} hrs, distance: {dist} km,'
-                f'avg speed: {av_sp} km/hr, kcal: {clr}')
+class InfoMessage:
+    def __init__(
+        self,
+        training_type: str,
+        duration: float,
+        distance: float,
+        speed: float,
+        calories: float,
+    ) -> None:
+        self.training_type = training_type
+        self.duration = duration
+        self.distance = distance
+        self.speed = speed
+        self.calories = calories
+
+    def __str__(self) -> str:
+        return (
+            f"Training: {self.training_type}, "
+            f"duration: {self.duration} hrs, "
+            f"distance: {self.duration} km, "
+            f"avg speed: {self.speed} km/hr, "
+            f"kcal: {self.calories}"
+        )
 
 
-def main(*training_driver_data):
-    training_info = do_sth_cool(*training_driver_data)
-    print(training_info)
+class Training:
+    LEN_STEP: float = 0.65
+    M_IN_KM: int = 1000
+
+    def __init__(self, action: float, duration: float, weight: float) -> None:
+        self.action = action
+        self.duration = duration
+        self.weight = weight
+
+    def __str__(self) -> str:
+        return self.__class__.__name__
+
+    def get_distance(self) -> float:
+        return self.action * self.LEN_STEP / self.M_IN_KM
+
+    def get_mean_speed(self) -> float:
+        return self.get_distance() / self.duration
+
+    def get_spent_calories(self) -> float:
+        assert NotImplementedError
+
+    def show_training_info(self) -> InfoMessage:
+        return InfoMessage(
+            self.__class__.__name__,
+            self.duration,
+            self.get_distance(),
+            self.get_mean_speed(),
+            self.get_spent_calories(),
+        )
 
 
-if __name__ == '__main__':
-    # Изменять переменную нельзя, в таком виде получаем с датчиков
+class Swimming(Training):
+    LEN_STEP: float = 1.38
+
+    def __init__(
+        self,
+        action: float,
+        duration: float,
+        weight: float,
+        length_pool: float,
+        count_pool: int,
+    ) -> None:
+        super().__init__(action, duration, weight)
+        self.length_pool = length_pool
+        self.count_pool = count_pool
+
+    def get_distance(self) -> flaot:
+        return super().get_distance()
+
+    def get_mean_speed(self) -> float:
+        return self.length_pool * self.count_pool / self.M_IN_KM / self.duration
+
+    def get_spent_calories(self) -> float:
+        const_a = 1.1  # TODO https://www.youtube.com/watch?v=EXI4TC0xpKw
+        const_b = 2  # TODO https://www.youtube.com/watch?v=EXI4TC0xpKw
+        return (self.get_mean_speed() + const_a) * const_b * self.weight
+
+
+class SportsWalking(Training):
+    def __init__(
+        self, action: float, duration: float, weight: float, height: float
+    ) -> None:
+        super().__init__(action, duration, weight)
+
+        self.height = height
+
+    def get_spent_calories(self) -> float:
+        min_in_hour = 60
+        const_c = 0.035  # TODO https://www.youtube.com/watch?v=EXI4TC0xpKw
+        const_d = 0.029  # TODO https://www.youtube.com/watch?v=EXI4TC0xpKw
+        return (
+            (
+                const_c * self.weight
+                + (self.get_mean_speed() ** 2 // self.height) * const_d * self.weight
+            )
+            * self.duration
+            * min_in_hour
+        )
+
+
+class Running(Training):
+    def get_spent_calories(self) -> float:
+        min_in_hour = 60
+        const_e = 18  # TODO https://www.youtube.com/watch?v=EXI4TC0xpKw
+        const_f = 20  # TODO https://www.youtube.com/watch?v=EXI4TC0xpKw
+        return (
+            (const_e * self.get_mean_speed() - const_f)
+            * self.weight
+            / self.M_IN_KM
+            * self.duration
+            * min_in_hour
+        )
+
+
+def read_package() -> list:
+    # magic
     data_from_drivers = [
-        ('Walking', [9000, 1, 75, 180]),
-        ('Running', [15000, 1, 75]),
-        ('Swimming', [720, 1, 75, 25, 40]),
+        ("SportsWalking", [9000, 1, 75, 180]),
+        ("Running", [15000, 1, 75]),
+        ("Swimming", [720, 1, 75, 25, 40]),
     ]
-    for d in data_from_drivers:
-        tr_type = d[0]
-        if tr_type == 'Walking':
-            action, duration, weight, height = d[1]
-            main(tr_type, action, duration, weight, height, None, None)
-        elif tr_type == 'Running':
-            action, duration, weight = d[1]
-            main(tr_type, action, duration, weight, None, None, None)
-        elif tr_type == 'Swimming':
-            action, duration, weight, length_pool, n_times_pool_passed = d[1]
-            main(tr_type, action, duration, weight, None, length_pool, n_times_pool_passed)
+    return data_from_drivers
+
+
+def main() -> None:
+    for training_type, data in read_package():
+        class_str = training_type
+        args_str = str(data)[1:-1]
+        calc_class = eval(
+            f"{class_str}({args_str})"
+        )  # equal `calc_class = class(args)`
+        print(calc_class.show_training_info())
+
+
+if __name__ == "__main__":
+    main()
