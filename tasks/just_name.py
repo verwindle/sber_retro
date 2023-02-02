@@ -4,16 +4,16 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # * type checking is false at runtime, but you have provide annotations
     from typing import (
-        Generator,
         List,  # * for assignment aliases only
         Mapping,
-        Sequence,
+        Optional,
+        Tuple,
     )  # TODO import others
 
     from numpy.typing import ArrayLike, NDArray
     from typing_extensions import Protocol
 
-from numpy import array, ndarray  # TODO import more
+from numpy import ndarray, int16, arange, int64  # TODO import more
 
 # TODO rename every function and class following
 # TODO provide types everywhere
@@ -23,26 +23,31 @@ from numpy import array, ndarray  # TODO import more
 # * similarly, prefer Mapping over dict if it doesn't need dict methods
 
 
-def bar():
-    x = sum(range(5))
+def sum_of_range_five() -> int:
+    return sum(range(5))
 
 
-def collect(parent_path = "sberpm"):
+def collect(parent_path: str = "sberpm") -> Tuple[str, ...]:
     return ("_holder.py", "setup.py")
 
 
-def first_user(users):
+class User(NamedTuple):
+    name: str
+    second_name: str
+    birthday: float
+
+
+def first_user(users: List[User]) -> Optional[User]:
     """Возвращает самого молодого пользователя из списка"""
     if not users:
         return None
 
-    print(users[0])
     sorted_users = sorted(users, key=lambda x: x.birthday)
 
     return sorted_users[0]
 
 
-class Activities(tuple):  # TODO rename, not tuple exactly
+class ActivitiesLabels(NamedTuple):
     labels_activities: Mapping[int, str]
     activities_labels: Mapping[str, int]
 
@@ -50,47 +55,55 @@ class Activities(tuple):  # TODO rename, not tuple exactly
 radius = int
 
 
-def area(r):
-    return 3.1415 * r * r
+def calculate_circle_area(radius: int) -> float:
+    return 3.1415 * radius**2
 
 
 Vector = List[float]  # * future annotation doesn't not help with aliases
 
 
-def scale(scalar, vector) -> Vector:
-    return [scalar * num for num in vector]
+def scale_vector_elements(scale: float, vector: Vector) -> Vector:
+    return [scale * num for num in vector]
 
 
-class Devs(Enum):  # rename too
+class Developers(Enum):
     ALEXANDER = auto()
     ILYA = auto()
     ROMA = auto()
-    # TODO more
+    one = auto()
+    two = auto()
+    tri = auto()
 
-    # TODO implement str name return on str call, make instance of string
-
-
-def as_array(arr) -> ndarray:
-    return array(arr)
-
-
-def arange1(length: int) -> NDArray[np.int16]:
-    return np.arange(length, dtype=np.int32)
+    def __str__(self) -> str:
+        return self.name
 
 
-def arange2(length: int) -> NDArray[np.int64]:
-    return np.arange(length, dtype=np.int64)
+def convert_type_to_ndarray(array: any) -> ndarray:
+    return array(array)
+
+
+def arange_int16(length: int) -> NDArray[int16]:
+    return arange(length, dtype=int16)
+
+
+def arange_int64(length: int) -> NDArray[int64]:
+    return arange(length, dtype=int64)
 
 
 class CocaCola(Protocol):
     @property
-    def cap(self):
-        # TODO description
+    def cup(self) -> None:
+        "Just a cup"
+        print("Get cup")
 
     def prazdnik_k_nam_prihodit(self) -> int:
-        # TODO description
+        pass
 
-    # TODO two more methods
+    def do_something(self) -> str:
+        return "I do something with CocaCola"
+
+    def get_cola(self) -> None:
+        print("I get cola")
 
 
 # *****************************************************************
@@ -99,22 +112,22 @@ class CocaCola(Protocol):
 
 
 # TODO check yourself (part of examples provided)
-if __name__ == "__main__":    # =================================================================
-    abc = bar()  # ! ERROR: "bar" does not return a value
+if __name__ == "__main__":  # =================================================================
+    abc = sum_of_range_five()  # ! ERROR: "bar" does not return a value
     abc += 1
     # =================================================================
-    r = area(radius)  # * OK
+    r = calculate_circle_area(radius)  # * OK
 
     integer_radius = 4 + 2.5j
-    r = area(integer_radius)  # ! ERROR
+    r = calculate_circle_area(integer_radius)  # ! ERROR
     # =================================================================
-    a = scale(scalar=2.0, vector=[1.0, 2.0, 3.0])  # * OK
-    a = scale(scalar=2.0, vector={1.0, 2.0, 3.0})  # ! ERROR
+    a = scale_vector_elements(scalar=2.0, vector=[1.0, 2.0, 3.0])  # * OK
+    a = scale_vector_elements(scalar=2.0, vector={1.0, 2.0, 3.0})  # ! ERROR
     # =================================================================
     for pyfile in collect():  # * OK
         print(pyfile)
 
     collect().append("text_clustering.py")  # ! ERROR
     # =================================================================
-    arange1(32767)  # * OK
-    arange1(32768)  # ! no type checker message though, will lead to an error
+    arange_int16(32767)  # * OK
+    arange_int64(32768)  # ! no type checker message though, will lead to an error
