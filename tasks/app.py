@@ -9,7 +9,7 @@ class InfoMessage:
 
     Параметры
     ----------
-    calories : float
+    calories : floaty
         Количество сжигаемых калорий за тренировку.
 
     duration : float
@@ -224,12 +224,11 @@ class Swimming(Training):
 
 
 def read_package() -> dict:
-    data = [
-        ("SportsWalking", [9000, 1, 75, 180]),
-        ("Running", [15000, 1, 75]),
-        ("Swimming", [720, 1, 75, 25, 40]),
-    ]
-    return dict(data)
+    return {
+        "SportsWalking": [9000, 1, 75, 180],
+        "Running": [15000, 1, 75],
+        "Swimming": [720, 1, 75, 25, 40],
+    }
 
 
 def main() -> None:
