@@ -13,7 +13,7 @@ if TYPE_CHECKING:  # * type checking is false at runtime, but you have provide a
     from numpy.typing import ArrayLike, NDArray
     from typing_extensions import Protocol
 
-from numpy import ndarray, int16, arange, int64  # TODO import more
+from numpy import ndarray, int16, arange, int64, pi  # TODO import more
 
 # TODO rename every function and class following
 # TODO provide types everywhere
@@ -56,7 +56,7 @@ radius = int
 
 
 def calculate_circle_area(radius: int) -> float:
-    return 3.1415 * radius**2
+    return pi * radius**2
 
 
 Vector = List[float]  # * future annotation doesn't not help with aliases
