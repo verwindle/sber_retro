@@ -57,7 +57,8 @@ def test_Training():
         'Проверьте, что `Training` - это класс.'
     )
     training = app.Training
-    training_signature = inspect.signature(training)
+    # ? видимо тут ошибка была
+    training_signature = app.signature(training)
     training_signature_list = list(training_signature.parameters)
     for param in ['action', 'duration', 'weight']:
         assert param in training_signature_list, (

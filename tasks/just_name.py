@@ -1,19 +1,24 @@
 from enum import Enum, auto
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, NamedTuple, Tuple
 
 if TYPE_CHECKING:  # * type checking is false at runtime, but you have provide annotations
     from typing import (
-        Generator,
         List,  # * for assignment aliases only
         Mapping,
-        Sequence,
+        Optional,
     )  # TODO import others
 
     from numpy.typing import ArrayLike, NDArray
     from typing_extensions import Protocol
 
-from numpy import array, ndarray  # TODO import more
+from numpy import (
+    array,
+    arange, 
+    ndarray,
+    int32,
+    int64,
+)  # TODO import more
 
 # TODO rename every function and class following
 # TODO provide types everywhere
@@ -23,74 +28,92 @@ from numpy import array, ndarray  # TODO import more
 # * similarly, prefer Mapping over dict if it doesn't need dict methods
 
 
-def bar():
-    x = sum(range(5))
+def alternative_factorial(value: int = 5) -> None:
+    x = sum(range(value))
 
 
-def collect(parent_path = "sberpm"):
+def collect(parent_path: str = "sberpm") -> Tuple[str, ...]:
     return ("_holder.py", "setup.py")
 
+class User(NamedTuple):
+    name: str
+    second_name: str
+    birthday: float
 
-def first_user(users):
+def first_user(users: List[User]) -> Optional[User]:
     """Возвращает самого молодого пользователя из списка"""
     if not users:
         return None
-
-    print(users[0])
     sorted_users = sorted(users, key=lambda x: x.birthday)
 
     return sorted_users[0]
 
 
-class Activities(tuple):  # TODO rename, not tuple exactly
+class ActivitiesLabelsMatch(NamedTuple):  # TODO rename, not tuple exactly
     labels_activities: Mapping[int, str]
     activities_labels: Mapping[str, int]
 
 
 radius = int
+PI = 3.1415
 
-
-def area(r):
-    return 3.1415 * r * r
+def area(radius: int) -> float:
+    return PI * radius ** 2
 
 
 Vector = List[float]  # * future annotation doesn't not help with aliases
 
 
-def scale(scalar, vector) -> Vector:
-    return [scalar * num for num in vector]
+def scale(scale_value: float, vector: Vector) -> Vector:
+    return [scale_value * num for num in vector]
 
 
-class Devs(Enum):  # rename too
+class Developers(Enum):  # rename too
     ALEXANDER = auto()
     ILYA = auto()
     ROMA = auto()
+    more = auto()
+    more_more = auto() 
     # TODO more
 
     # TODO implement str name return on str call, make instance of string
+    def __str__(self) -> str:
+        return self.name
 
-
-def as_array(arr) -> ndarray:
+def as_array(arr: List[Any]) -> ndarray:
     return array(arr)
 
 
-def arange1(length: int) -> NDArray[np.int16]:
-    return np.arange(length, dtype=np.int32)
+def arange1(length: int) -> NDArray[int32]:
+    return arange(length, dtype=int32)
 
 
-def arange2(length: int) -> NDArray[np.int64]:
-    return np.arange(length, dtype=np.int64)
+def arange2(length: int) -> NDArray[int64]:
+    return arange(length, dtype=int64)
 
 
 class CocaCola(Protocol):
+    days_left: int
+
     @property
-    def cap(self):
+    def cup(self) -> None:
+        """Info about cup content"""
+        print(f'Cup of coke!')
         # TODO description
 
-    def prazdnik_k_nam_prihodit(self) -> int:
+    def holidays_coming(self) -> int:
+        """Prazdink k nam prihodit, how many days are left before holiday"""
         # TODO description
+        return self.days_left
 
-    # TODO two more methods
+    def fill_cup(self) -> None:
+        """Fill cup"""
+        print(f'You fill the cup!')
+
+    def drink_cup(self) -> None:
+        """Every sip brings the holidays closer"""
+        self.days_left -= 1
+        print(f'You drink the cup of coke!')
 
 
 # *****************************************************************
@@ -100,7 +123,7 @@ class CocaCola(Protocol):
 
 # TODO check yourself (part of examples provided)
 if __name__ == "__main__":    # =================================================================
-    abc = bar()  # ! ERROR: "bar" does not return a value
+    abc = alternative_factorial()  # ! ERROR: "bar" does not return a value
     abc += 1
     # =================================================================
     r = area(radius)  # * OK
@@ -108,8 +131,8 @@ if __name__ == "__main__":    # ================================================
     integer_radius = 4 + 2.5j
     r = area(integer_radius)  # ! ERROR
     # =================================================================
-    a = scale(scalar=2.0, vector=[1.0, 2.0, 3.0])  # * OK
-    a = scale(scalar=2.0, vector={1.0, 2.0, 3.0})  # ! ERROR
+    a = scale(scale_value=2.0, vector=[1.0, 2.0, 3.0])  # * OK
+    a = scale(scale_value=2.0, vector={1.0, 2.0, 3.0})  # ! ERROR
     # =================================================================
     for pyfile in collect():  # * OK
         print(pyfile)
