@@ -1,26 +1,41 @@
-from enum import Enum
-from typing import List, Optional, Tuple, Union
+from dataclasses import dataclass, asdict
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from enum import Enum
+    from typing import (
+        List, 
+        Optional, 
+        Tuple, 
+        Union,
+        NoReturn
+    )
 
 
+@dataclass
 class InfoMessage:
-    def __init__(self, training_type: Optional[str], duration: float, distance: float, speed: float, calories: float) -> None:
-        self.training_type = training_type
-        self.duration = duration
-        self.distance = distance
-        self.speed = speed
-        self.calories = calories
+    """"""
+    training_type: Optional[str]
+    duration: float
+    distance: float
+    speed: float
+    calories: float
+
+    def __post_init__(self) -> NoReturn:
+        self.info_message = 'Training: {training_type}, duration: {duration:.2f} hrs, distance: {distance:.2f} ' + (
+            'km, average speed: {speed:.2f} km/hr, kcal: {calories:.2f}')
 
     def __str__(self) -> str:
-        return (f'Trainig: {self.training_type}, duration: {self.duration} hrs, distance: {self.distance} '\
-            f'km, average speed: {self.speed} km/hr, kcal: {self.calories}')
-
+        return self.info_message.format(**asdict(self))
 
 class Training:
+    """"""
     LEN_STEP: float = .65
     M_IN_KM: int = 1000
     MIN_IN_HOUR: int = 60
 
-    def __init__(self, action: int, duration: float, weight: float) -> None:
+    def __init__(self, action: int, duration: float, weight: float) -> NoReturn:
         self.training_type: Optional[str] = None
         self.action = action
         self.duration = duration
@@ -41,41 +56,41 @@ class Training:
 
 
 class SportsWalking(Training):
-    __walking_coef_a: float = .035
-    __walking_coef_b: float = .029
+    WALKING_COEF_A: float = .035
+    WALKING_COEF_B: float = .029
 
-    def __init__(self, action: int, duration: float, weight: float, height: float) -> None:
+    def __init__(self, action: int, duration: float, weight: float, height: float) -> NoReturn:
         super().__init__(action, duration, weight)
         
         self.training_type = 'Walking'
         self.height = height
 
     def get_spent_calories(self) -> float:
-        return ((self.__walking_coef_a * self.weight + (self.get_mean_speed() ** 2 // self.height) *\
-            self.__walking_coef_b * self.weight) * self.duration * self.MIN_IN_HOUR)
+        return ((self.WALKING_COEF_A * self.weight + (self.get_mean_speed() ** 2 // self.height) * (
+            self.WALKING_COEF_B * self.weight) * self.duration * self.MIN_IN_HOUR))
             
 
 class Running(Training):
-    __running_coef_a: int = 18
-    __running_coef_b: int = 20
+    RUNNING_COEF_A: int = 18
+    RUNNING_COEF_B: int = 20
 
-    def __init__(self, action: int, duration: float, weight: float) -> None:
+    def __init__(self, action: int, duration: float, weight: float) -> NoReturn:
         super().__init__(action, duration, weight)
         
         self.training_type = 'Running'
 
     def get_spent_calories(self) -> float:
-        return (self.__running_coef_a * self.get_mean_speed() - self.__running_coef_b) * self.weight /\
-            self.M_IN_KM * self.duration * self.MIN_IN_HOUR
+        return (self.RUNNING_COEF_A * self.get_mean_speed() - self.RUNNING_COEF_B) * self.weight / (
+            self.M_IN_KM * self.duration * self.MIN_IN_HOUR)
 
 
 class Swimming(Training):
     LEN_STEP: float = 1.38
 
-    __swimming_coef_a: float = 1.1
-    __swimming_coef_b: int = 2
+    SWIMMING_COEF_A: float = 1.1
+    SWIMMING_COEF_B: int = 2
 
-    def __init__(self, action: int, duration: float, weight: float, length_pool: float, count_pool: int) -> None:
+    def __init__(self, action: int, duration: float, weight: float, length_pool: float, count_pool: int) -> NoReturn:
         super().__init__(action, duration, weight)
 
         self.training_type = 'Swimming'
@@ -86,7 +101,7 @@ class Swimming(Training):
         return self.length_pool * self.count_pool / self.M_IN_KM / self.duration
 
     def get_spent_calories(self) -> float:
-        return (self.get_mean_speed() + self.__swimming_coef_a) * self.__swimming_coef_b * self.weight
+        return (self.get_mean_speed() + self.SWIMMING_COEF_A) * self.SWIMMING_COEF_B * self.weight
 
 
 class Trainings(Enum):
@@ -94,23 +109,21 @@ class Trainings(Enum):
     Running = Running
     Swimming = Swimming
 
-# возможно это лишнее
-Data = List[Union[int, float]]
+def read_package(package: Tuple[str, List[float]]) -> Training:
+    """some processing"""
+    training_type, attrs = package
 
+    return Trainings[training_type].value(*attrs)
 
-def read_package() -> List[Tuple[str, Data]]:
-    return [
+def main(training: Training) -> None:
+    print(training.show_training_info())
+
+if __name__ == '__main__':
+    packages = [
         ('Walking', [9000, 1, 75, 180]),
         ('Running', [15000, 1, 75]),
         ('Swimming', [720, 1, 75, 25, 40]),
     ]
-
-def main() -> None:
-    data = read_package()
-
-    for training_type, attrs in data:
-        print(Trainings[training_type].value(*attrs).get_training_info())
-
-
-if __name__ == '__main__':
-    main()
+    
+    for pack in packages:
+        main(read_package(pack))
