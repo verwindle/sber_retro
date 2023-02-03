@@ -43,7 +43,7 @@ def test_InfoMessage():
         'Проверьте, что `InfoMessage` - это класс.'
     )
     info_message = app.InfoMessage
-    info_message_signature = app.signature(info_message)
+    info_message_signature = inspect.signature(info_message)
     info_message_signature_list = list(info_message_signature.parameters)
     for p in ['training_type', 'duration', 'distance', 'speed', 'calories']:
         assert p in info_message_signature_list, (
@@ -57,6 +57,7 @@ def test_Training():
         'Проверьте, что `Training` - это класс.'
     )
     training = app.Training
+    # ? видимо тут ошибка была
     training_signature = inspect.signature(training)
     training_signature_list = list(training_signature.parameters)
     for param in ['action', 'duration', 'weight']:

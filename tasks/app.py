@@ -1,50 +1,129 @@
-def do_sth_cool(tr_type, action, dur, weight, height=None, length_pool=None, n_times_pool_passed=None):
-    if tr_type == 'Walking':
-        dist = action * .65 / 1000  # действие * на длину шага в м / метров в км
-        av_sp = dist / dur  # средняя скорость
-        # формула (а * вес + ср скорость ** 2 // рост * b * вес) * длительность * минут в час
-        clr = ((.035 * weight + (
-                av_sp ** 2 // height
-        ) * .029 * weight) * dur * 60)
-        return (f'Training: {tr_type}, duration: {dur} hrs, distance: {dist} km,'
-                f'avg speed: {av_sp} km/hr, kcal: {clr}')
-    if tr_type == 'Running':
-        dist = action * .65 / 1000
-        av_sp = dist / dur
-        # формула (а * ср скорость - b) * вес / метров в км * длительность * минут в час
-        clr = (18 * av_sp - 20) * weight / 1000 * dur * 60
-        return (f'Training: {tr_type}, duration: {dur} hrs, distance: {dist} km,'
-                f'avg speed: {av_sp} km/hr, kcal: {clr}')
-    if tr_type == 'Swimming':
-        dist = action * 1.38 / 1000
-        # формула длина дорожки * кол-во раз прохода дорожки / метров в км / длительность
-        av_sp = length_pool * n_times_pool_passed / 1000 / dur
-        # формула (ср скорость + а) * b * вес
-        clr = (av_sp + 1.1) * 2 * weight
-        return (f'Training: {tr_type}, duration: {dur} hrs, distance: {dist} km,'
-                f'avg speed: {av_sp} km/hr, kcal: {clr}')
+from dataclasses import dataclass, asdict
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from enum import Enum
+    from typing import (
+        List, 
+        Optional, 
+        Tuple, 
+        Union,
+        NoReturn
+    )
 
 
-def main(*training_driver_data):
-    training_info = do_sth_cool(*training_driver_data)
-    print(training_info)
+@dataclass
+class InfoMessage:
+    """"""
+    training_type: Optional[str]
+    duration: float
+    distance: float
+    speed: float
+    calories: float
 
+    def __post_init__(self) -> NoReturn:
+        self.info_message = 'Training: {training_type}, duration: {duration:.2f} hrs, distance: {distance:.2f} ' + (
+            'km, average speed: {speed:.2f} km/hr, kcal: {calories:.2f}')
+
+    def __str__(self) -> str:
+        return self.info_message.format(**asdict(self))
+
+class Training:
+    """"""
+    LEN_STEP: float = .65
+    M_IN_KM: int = 1000
+    MIN_IN_HOUR: int = 60
+
+    def __init__(self, action: int, duration: float, weight: float) -> NoReturn:
+        self.training_type: Optional[str] = None
+        self.action = action
+        self.duration = duration
+        self.weight = weight
+
+    def get_distance(self) -> float:
+        return self.action * self.LEN_STEP / self.M_IN_KM
+
+    def get_mean_speed(self) -> float:
+        return self.get_distance() / self.duration
+
+    def get_spent_calories(self) -> float:
+        raise NotImplementedError
+
+    def show_training_info(self) -> InfoMessage:
+        return InfoMessage(self.training_type, self.duration, self.get_distance(), self.get_mean_speed(), 
+            self.get_spent_calories())
+
+
+class SportsWalking(Training):
+    WALKING_COEF_A: float = .035
+    WALKING_COEF_B: float = .029
+
+    def __init__(self, action: int, duration: float, weight: float, height: float) -> NoReturn:
+        super().__init__(action, duration, weight)
+        
+        self.training_type = 'Walking'
+        self.height = height
+
+    def get_spent_calories(self) -> float:
+        return ((self.WALKING_COEF_A * self.weight + (self.get_mean_speed() ** 2 // self.height) * (
+            self.WALKING_COEF_B * self.weight) * self.duration * self.MIN_IN_HOUR))
+            
+
+class Running(Training):
+    RUNNING_COEF_A: int = 18
+    RUNNING_COEF_B: int = 20
+
+    def __init__(self, action: int, duration: float, weight: float) -> NoReturn:
+        super().__init__(action, duration, weight)
+        
+        self.training_type = 'Running'
+
+    def get_spent_calories(self) -> float:
+        return (self.RUNNING_COEF_A * self.get_mean_speed() - self.RUNNING_COEF_B) * self.weight / (
+            self.M_IN_KM * self.duration * self.MIN_IN_HOUR)
+
+
+class Swimming(Training):
+    LEN_STEP: float = 1.38
+
+    SWIMMING_COEF_A: float = 1.1
+    SWIMMING_COEF_B: int = 2
+
+    def __init__(self, action: int, duration: float, weight: float, length_pool: float, count_pool: int) -> NoReturn:
+        super().__init__(action, duration, weight)
+
+        self.training_type = 'Swimming'
+        self.length_pool = length_pool
+        self.count_pool = count_pool
+    
+    def get_mean_speed(self) -> float:
+        return self.length_pool * self.count_pool / self.M_IN_KM / self.duration
+
+    def get_spent_calories(self) -> float:
+        return (self.get_mean_speed() + self.SWIMMING_COEF_A) * self.SWIMMING_COEF_B * self.weight
+
+
+class Trainings(Enum):
+    Walking = SportsWalking
+    Running = Running
+    Swimming = Swimming
+
+def read_package(package: Tuple[str, List[float]]) -> Training:
+    """some processing"""
+    training_type, attrs = package
+
+    return Trainings[training_type].value(*attrs)
+
+def main(training: Training) -> None:
+    print(training.show_training_info())
 
 if __name__ == '__main__':
-    # Изменять переменную нельзя, в таком виде получаем с датчиков
-    data_from_drivers = [
+    packages = [
         ('Walking', [9000, 1, 75, 180]),
         ('Running', [15000, 1, 75]),
         ('Swimming', [720, 1, 75, 25, 40]),
     ]
-    for d in data_from_drivers:
-        tr_type = d[0]
-        if tr_type == 'Walking':
-            action, duration, weight, height = d[1]
-            main(tr_type, action, duration, weight, height, None, None)
-        elif tr_type == 'Running':
-            action, duration, weight = d[1]
-            main(tr_type, action, duration, weight, None, None, None)
-        elif tr_type == 'Swimming':
-            action, duration, weight, length_pool, n_times_pool_passed = d[1]
-            main(tr_type, action, duration, weight, None, length_pool, n_times_pool_passed)
+    
+    for pack in packages:
+        main(read_package(pack))
